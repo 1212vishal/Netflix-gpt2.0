@@ -1,20 +1,64 @@
 import React, { useRef, useState } from "react";
 import Header from "./Header";
 import { isValid } from "../utils/Validate";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "../utils/firebase";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [togglForm, settoggleForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+  const navigate = useNavigate();
 
   const email = useRef(null);
   const password = useRef(null);
+  const fullName = useRef(null);
 
   const handleClick = () => {
     const message = isValid(email.current.value, password.current.value);
-    //console.log(email.current.value);
-    //console.log(password.current.value);
-    //console.log(message);
-    setErrorMessage(message);
+
+    if (message) return;
+    if (!togglForm) {
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          // ...
+
+          navigate("/browse");
+        })
+        .catch((error) => {
+          //const errorCode = error.code;
+          const errorMessage = error.message;
+          // ..
+          console.log(errorMessage);
+        });
+    } else {
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+
+          navigate("/browse");
+        })
+        .catch((error) => {
+          //const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorMessage);
+          console.log(errorMessage);
+        });
+    }
   };
 
   const handleToggleForm = () => {
@@ -38,27 +82,27 @@ const Login = () => {
         </h1>
         {!togglForm && (
           <input
+            ref={fullName}
             className="w-full p-2 m-3 bg-slate-700 text-white"
             type="text"
             placeholder="Full Name"
           ></input>
         )}
-        {!togglForm && (
+        {/* {!togglForm && (
           <input
             className="w-full p-2 m-3 bg-slate-700 text-white"
             type="text"
             placeholder="Email"
           ></input>
-        )}
+        )} */}
 
-        {togglForm && (
-          <input
-            ref={email}
-            className="w-full p-2 m-3 bg-slate-700 text-white"
-            type="text"
-            placeholder="User Name"
-          ></input>
-        )}
+        <input
+          ref={email}
+          className="w-full p-2 m-3 bg-slate-700 text-white"
+          type="text"
+          placeholder="User Name"
+        ></input>
+
         <input
           ref={password}
           className="w-full p-2 m-3 bg-gray-700 text-white"
